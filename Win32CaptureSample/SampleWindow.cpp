@@ -45,7 +45,7 @@ SampleWindow::SampleWindow(int width, int height, std::shared_ptr<App> app)
 
     std::call_once(SampleWindowClassRegistration, []() { RegisterWindowClass(); });
 
-    auto exStyle = 0;
+    auto exStyle = WS_EX_TOOLWINDOW;
     auto style = WS_OVERLAPPEDWINDOW;
 
     RECT rect = { 0, 0, width, height };
@@ -70,8 +70,10 @@ SampleWindow::SampleWindow(int width, int height, std::shared_ptr<App> app)
 
     CreateControls(instance);
 
-    ShowWindow(m_window, SW_SHOW);
+    ShowWindow(m_window, SW_HIDE);
     UpdateWindow(m_window);
+
+    PostMessage(m_window, WM_START_CAPTURE, 0, 0);
 }
 
 SampleWindow::~SampleWindow()
@@ -83,6 +85,10 @@ LRESULT SampleWindow::MessageHandler(UINT const message, WPARAM const wparam, LP
 {
     switch (message)
     {
+    case WM_START_CAPTURE:
+            AutoStartCapture();
+            break;
+
     case WM_COMMAND:
     {
         auto command = HIWORD(wparam);

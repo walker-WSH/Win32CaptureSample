@@ -143,6 +143,7 @@
     <ClCompile Include="App.cpp" />
     <ClCompile Include="CaptureSnapshot.cpp" />
     <ClCompile Include="change\CustomChange.cpp" />
+    <ClCompile Include="change\ExtensionFunc.cpp" />
     <ClCompile Include="change\HandleWrapper.cpp" />
     <ClCompile Include="change\StringConvert.cpp" />
     <ClCompile Include="main.cpp" />

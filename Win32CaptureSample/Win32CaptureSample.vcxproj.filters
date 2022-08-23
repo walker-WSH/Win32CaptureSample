@@ -18,6 +18,9 @@
     <ClCompile Include="change\StringConvert.cpp">
       <Filter>CustomChange</Filter>
     </ClCompile>
+    <ClCompile Include="change\ExtensionFunc.cpp">
+      <Filter>CustomChange</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />

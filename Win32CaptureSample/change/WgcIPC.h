@@ -23,6 +23,7 @@
 enum class E_WgcExitCode {
 	Normal = 10000,
 	InvalidParam,
+	Unavailable,
 	Crahed,
 	NotFound,
 	Unsupported,

@@ -9,6 +9,8 @@
 #include "WgcIPC.h"
 #include "HandleWrapper.h"
 
+#define WM_START_CAPTURE (WM_USER + 1)
+
 struct ST_EnumMonitorInfo {
 	HMONITOR handle = 0;
 	size_t index = 0;
@@ -28,6 +30,8 @@ public:
 	void Start();
 	void Stop();
 
+	ST_WGCMapInfo *m_pMapInfo = nullptr;
+
 protected:
 	CustomChange() {}
 
@@ -40,7 +44,6 @@ private:
 
 	HANDLE m_hMapHandle = 0;
 	void *m_pMapViewOfFile = nullptr;
-	ST_WGCMapInfo *m_pMapInfo = nullptr;
 
 	HANDLE m_hExitEvent = 0;
 	HANDLE m_hCheckAliveThread = 0;

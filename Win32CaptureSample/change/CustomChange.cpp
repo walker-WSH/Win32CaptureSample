@@ -1,5 +1,4 @@
 #include "CustomChange.h"
-#include "HandleWrapper.h"
 #include "StringConvert.h"
 
 CustomChange *CustomChange::Instance()
@@ -30,64 +29,60 @@ unsigned CALLBACK CustomChange::CheckAliveThread(void *pParam)
 	return 0;
 }
 
+LONG WINAPI ExceptionFilter(struct _EXCEPTION_POINTERS *pExceptionPointers)
+{
+	TerminateProcess(GetCurrentProcess(), (UINT)E_WgcExitCode::Crahed);
+	return EXCEPTION_EXECUTE_HANDLER;
+}
+
 void CustomChange::InitParams()
 {
+	SetUnhandledExceptionFilter(ExceptionFilter);
+
 	int argc = 0;
 	LPWSTR *argv = CommandLineToArgvW(GetCommandLineW(), &argc);
 	if (!argv) {
-		TerminateProcess(GetCurrentProcess(), (UINT)E_WgcExitCode::InvalidParam);
 		assert(false);
+		TerminateProcess(GetCurrentProcess(), (UINT)E_WgcExitCode::InvalidParam);
 		return;
 	}
 
 	std::shared_ptr<LPWSTR> freeArg(argv, [](LPWSTR *ptr) { LocalFree(ptr); });
 
-	if (argc != 5) {
-		TerminateProcess(GetCurrentProcess(), (UINT)E_WgcExitCode::InvalidParam);
+	if (argc != 2 || !argv[1]) {
 		assert(false);
+		TerminateProcess(GetCurrentProcess(), (UINT)E_WgcExitCode::InvalidParam);
 		return;
 	}
 
-	LPWSTR cursor = argv[1];
-	LPWSTR method = argv[2];
-	LPWSTR value = argv[3]; // HWND or monitor index
-	LPWSTR guid = argv[4];
+	m_strGUID = str::w2u(argv[1]);
 
-	if (!cursor || !method || !value || !guid) {
-		TerminateProcess(GetCurrentProcess(), (UINT)E_WgcExitCode::InvalidParam);
-		assert(false);
+	if (!IsAlive()) {
+		TerminateProcess(GetCurrentProcess(), (UINT)E_WgcExitCode::ExitSelf);
 		return;
 	}
 
-	m_CaptureParams.cursor = !!std::stoi(cursor);
-	m_CaptureParams.value = std::stoull(value);
-	m_CaptureParams.guid = str::w2u(guid);
+	if (!InitMap()) {
+		TerminateProcess(GetCurrentProcess(), (UINT)E_WgcExitCode::FailInitMap);
+		return;
+	}
 
-	if (0 == wcscmp(method, L"window")) {
-		m_CaptureParams.type = E_CaptureType::TypeWindow;
-
-		if (!IsWindow(HWND(m_CaptureParams.value))) {
+	if (m_pMapInfo->input.type == E_CaptureType::TypeWindow) {
+		if (!IsWindow(HWND(m_pMapInfo->input.hWnd))) {
 			TerminateProcess(GetCurrentProcess(), (UINT)E_WgcExitCode::NotFound);
 			return;
 		}
-	} else if (0 == wcscmp(method, L"monitor")) {
-		m_CaptureParams.type = E_CaptureType::TypeMonitor;
-
+	} else if (m_pMapInfo->input.type == E_CaptureType::TypeMonitor) {
 		std::vector<ST_EnumMonitorInfo> monitorList;
 		EnumDisplayMonitors(nullptr, nullptr, EnumDisplayMonitors_Callback, (LPARAM)&monitorList);
 
-		if (m_CaptureParams.value < 0 || m_CaptureParams.value >= monitorList.size()) {
+		if (m_pMapInfo->input.monitorIndex < 0 || m_pMapInfo->input.monitorIndex >= monitorList.size()) {
 			TerminateProcess(GetCurrentProcess(), (UINT)E_WgcExitCode::NotFound);
 			return;
 		}
 	} else {
-		TerminateProcess(GetCurrentProcess(), (UINT)E_WgcExitCode::InvalidParam);
 		assert(false);
-		return;
-	}
-
-	if (!IsAlive()) {
-		TerminateProcess(GetCurrentProcess(), (UINT)E_WgcExitCode::ExitSelf);
+		TerminateProcess(GetCurrentProcess(), (UINT)E_WgcExitCode::InvalidParam);
 		return;
 	}
 }
@@ -103,15 +98,17 @@ void CustomChange::Stop()
 	SetEvent(m_hExitEvent);
 	WaitForSingleObject(m_hCheckAliveThread, INFINITE);
 
-	CloseHandle(m_hCheckAliveThread);
-	CloseHandle(m_hExitEvent);
+	UninitMap();
+
+	CHandleWrapper::CloseHandleEx(m_hCheckAliveThread);
+	CHandleWrapper::CloseHandleEx(m_hExitEvent);
 
 	TerminateProcess(GetCurrentProcess(), (UINT)E_WgcExitCode::Normal);
 }
 
 bool CustomChange::IsAlive()
 {
-	std::string name = m_CaptureParams.guid + std::string(CAPTURE_ALIVE_EVENT);
+	std::string name = m_strGUID + std::string(CAPTURE_ALIVE_EVENT);
 
 	HANDLE hdl = CHandleWrapper::GetAlreadyEvent(name.c_str());
 	if (!CHandleWrapper::IsHandleValid(hdl))
@@ -119,4 +116,37 @@ bool CustomChange::IsAlive()
 
 	CHandleWrapper::CloseHandleEx(hdl);
 	return true;
+}
+
+bool CustomChange::InitMap()
+{
+	SIZE_T size = ALIGN(sizeof(ST_WGCMapInfo), 64);
+	std::string name = m_strGUID + std::string(CAPTURE_INFO_MAP);
+
+	bool bNewCreate = false;
+	m_hMapHandle = CHandleWrapper::GetMap(name.c_str(), (unsigned)size, &bNewCreate);
+	if (!CHandleWrapper::IsHandleValid(m_hMapHandle) || bNewCreate) {
+		assert(false);
+		return false;
+	}
+
+	m_pMapViewOfFile = MapViewOfFile(m_hMapHandle, FILE_MAP_ALL_ACCESS, 0, 0, size);
+	if (!m_pMapViewOfFile) {
+		assert(false);
+		return false;
+	}
+
+	m_pMapInfo = (ST_WGCMapInfo *)m_pMapViewOfFile;
+	return true;
+}
+
+void CustomChange::UninitMap()
+{
+	if (m_pMapViewOfFile)
+		UnmapViewOfFile(m_pMapViewOfFile);
+
+	m_pMapViewOfFile = nullptr;
+	m_pMapInfo = nullptr;
+
+	CHandleWrapper::CloseHandleEx(m_hMapHandle);
 }

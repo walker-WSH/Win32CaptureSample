@@ -20,6 +20,8 @@ namespace util
 
 int __stdcall WinMain(HINSTANCE, HINSTANCE, PSTR, int)
 {
+    CustomChange::Instance()->InitParams();
+
     // SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2); // works but everything draws small
     // Initialize COM
     winrt::init_apartment(winrt::apartment_type::single_threaded);
@@ -59,7 +61,6 @@ int __stdcall WinMain(HINSTANCE, HINSTANCE, PSTR, int)
     auto target = window.CreateWindowTarget(compositor);
     target.Root(root);
     
-    CustomChange::Instance()->InitParams();
     CustomChange::Instance()->Start();
 
     // Message pump

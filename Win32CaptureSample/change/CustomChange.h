@@ -7,12 +7,7 @@
 #include <string>
 #include <vector>
 #include "WgcIPC.h"
-
-enum class E_CaptureType {
-	TypeUnknown = 0,
-	TypeWindow,
-	TypeMonitor,
-};
+#include "HandleWrapper.h"
 
 struct ST_EnumMonitorInfo {
 	HMONITOR handle = 0;
@@ -20,9 +15,6 @@ struct ST_EnumMonitorInfo {
 };
 
 struct ST_CaptureParam {
-	E_CaptureType type = E_CaptureType::TypeUnknown;
-	uint64_t value = 0; // HWND or monitor index
-	bool cursor = true;
 	std::string guid;
 };
 
@@ -40,9 +32,15 @@ protected:
 	CustomChange() {}
 
 	bool IsAlive();
+	bool InitMap();
+	void UninitMap();
 
 private:
-	ST_CaptureParam m_CaptureParams;
+	std::string m_strGUID;
+
+	HANDLE m_hMapHandle = 0;
+	void *m_pMapViewOfFile = nullptr;
+	ST_WGCMapInfo *m_pMapInfo = nullptr;
 
 	HANDLE m_hExitEvent = 0;
 	HANDLE m_hCheckAliveThread = 0;

@@ -56,8 +56,8 @@ struct ST_WGCOutputInfo {
 };
 
 struct ST_WGCMapInfo {
-	ST_WGCInputInfo input;
-	ST_WGCOutputInfo output;
+	ST_WGCInputInfo input;   // writen by main process
+	ST_WGCOutputInfo output; // writen by child process
 };
 #pragma pack(pop)
 //---------------------------------------- struct end ------------------------------------

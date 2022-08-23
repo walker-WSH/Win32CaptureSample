@@ -68,6 +68,7 @@ WindowList::WindowList()
     }
     WindowListForThread = this;
 
+    /*
     EnumWindows([](HWND hwnd, LPARAM lParam)
     {
         if (GetWindowTextLengthW(hwnd) > 0)
@@ -85,8 +86,8 @@ WindowList::WindowList()
         
         return TRUE;
     }, reinterpret_cast<LPARAM>(this));
-    
-    m_eventHook.reset(SetWinEventHook(EVENT_OBJECT_DESTROY, /*EVENT_OBJECT_SHOW*/EVENT_OBJECT_UNCLOAKED, nullptr,
+
+    m_eventHook.reset(SetWinEventHook(EVENT_OBJECT_DESTROY, EVENT_OBJECT_UNCLOAKED, nullptr,
         [](HWINEVENTHOOK eventHook, DWORD event, HWND hwnd, LONG objectId, LONG childId, DWORD eventThreadId, DWORD eventTimeInMilliseconds)
         {
             if (event == EVENT_OBJECT_DESTROY && childId == CHILDID_SELF)
@@ -106,6 +107,7 @@ WindowList::WindowList()
                 }
             }
         }, 0, 0, WINEVENT_OUTOFCONTEXT));
+    */
 }
 
 WindowList::~WindowList()

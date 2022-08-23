@@ -39,6 +39,8 @@ private:
         winrt::Windows::Graphics::Capture::GraphicsCaptureItem const& item, 
         CaptureType captureType);
 
+    void AutoStartCapture();
+
 private:
     HWND m_windowComboBox = nullptr;
     HWND m_monitorComboBox = nullptr;

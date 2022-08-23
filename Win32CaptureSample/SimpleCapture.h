@@ -45,6 +45,21 @@ private:
     bool TryResizeSwapChain(winrt::Windows::Graphics::Capture::Direct3D11CaptureFrame const& frame);
     bool TryUpdatePixelFormat();
 
+    winrt::com_ptr<ID3D11Texture2D> m_sharedTexture;
+    D3D11_TEXTURE2D_DESC m_TextureDesc{};
+    HANDLE m_hSharedHandle = 0;
+    void OnTextureCaptured(winrt::com_ptr<ID3D11Texture2D> texture) { 
+            if (!texture)
+		    return;
+
+            winrt::com_ptr<ID3D11Device> d3dDevice = GetDXGIInterfaceFromObject<ID3D11Device>(m_device);
+
+	    D3D11_TEXTURE2D_DESC descTemp;
+	    texture->GetDesc(&descTemp);
+
+            // TODO
+    }
+
 private:
     winrt::Windows::Graphics::Capture::GraphicsCaptureItem m_item{ nullptr };
     winrt::Windows::Graphics::Capture::Direct3D11CaptureFramePool m_framePool{ nullptr };

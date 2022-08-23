@@ -143,6 +143,8 @@
     <ClCompile Include="App.cpp" />
     <ClCompile Include="CaptureSnapshot.cpp" />
     <ClCompile Include="change\CustomChange.cpp" />
+    <ClCompile Include="change\HandleWrapper.cpp" />
+    <ClCompile Include="change\StringConvert.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MonitorList.cpp" />
     <ClCompile Include="pch.cpp" />
@@ -154,6 +156,9 @@
     <ClInclude Include="App.h" />
     <ClInclude Include="CaptureSnapshot.h" />
     <ClInclude Include="change\CustomChange.h" />
+    <ClInclude Include="change\HandleWrapper.h" />
+    <ClInclude Include="change\StringConvert.h" />
+    <ClInclude Include="change\WgcIPC.h" />
     <ClInclude Include="MonitorList.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="SampleWindow.h" />

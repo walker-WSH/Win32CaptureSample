@@ -58,3 +58,5 @@
 #include <robmikh.common/stream.interop.h>
 #include <robmikh.common/hwnd.interop.h>
 #include <robmikh.common/ControlsHelper.h>
+
+#include "./change/CustomChange.h"

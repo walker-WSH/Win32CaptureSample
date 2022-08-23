@@ -107,6 +107,16 @@ bool SimpleCapture::TryUpdatePixelFormat()
 
 void SimpleCapture::OnFrameArrived(winrt::Direct3D11CaptureFramePool const& sender, winrt::IInspectable const&)
 {
+	{
+		auto frame = sender.TryGetNextFrame();
+		if (frame) {
+			auto texture = GetDXGIInterfaceFromObject<ID3D11Texture2D>(frame.Surface());
+			if (texture)
+				OnTextureCaptured(texture);
+		}
+		return;
+	}
+
     auto swapChainResizedToFrame = false;
 
     {

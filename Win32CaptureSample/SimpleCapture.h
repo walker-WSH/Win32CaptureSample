@@ -45,6 +45,10 @@ private:
     bool TryResizeSwapChain(winrt::Windows::Graphics::Capture::Direct3D11CaptureFrame const& frame);
     bool TryUpdatePixelFormat();
 
+    // code related with shared texture
+    void OnTextureCaptured(winrt::com_ptr<ID3D11Texture2D> texture);
+    bool CreateSharedTexture(const D3D11_TEXTURE2D_DESC &descTemp, DXGI_FORMAT fmt);
+
 private:
     winrt::Windows::Graphics::Capture::GraphicsCaptureItem m_item{ nullptr };
     winrt::Windows::Graphics::Capture::Direct3D11CaptureFramePool m_framePool{ nullptr };

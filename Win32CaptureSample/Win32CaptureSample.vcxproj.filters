@@ -9,6 +9,18 @@
     <ClCompile Include="CaptureSnapshot.cpp" />
     <ClCompile Include="WindowList.cpp" />
     <ClCompile Include="MonitorList.cpp" />
+    <ClCompile Include="change\CustomChange.cpp">
+      <Filter>CustomChange</Filter>
+    </ClCompile>
+    <ClCompile Include="change\HandleWrapper.cpp">
+      <Filter>CustomChange</Filter>
+    </ClCompile>
+    <ClCompile Include="change\StringConvert.cpp">
+      <Filter>CustomChange</Filter>
+    </ClCompile>
+    <ClCompile Include="change\ExtensionFunc.cpp">
+      <Filter>CustomChange</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -18,8 +30,25 @@
     <ClInclude Include="CaptureSnapshot.h" />
     <ClInclude Include="WindowList.h" />
     <ClInclude Include="MonitorList.h" />
+    <ClInclude Include="change\CustomChange.h">
+      <Filter>CustomChange</Filter>
+    </ClInclude>
+    <ClInclude Include="change\WgcIPC.h">
+      <Filter>CustomChange</Filter>
+    </ClInclude>
+    <ClInclude Include="change\HandleWrapper.h">
+      <Filter>CustomChange</Filter>
+    </ClInclude>
+    <ClInclude Include="change\StringConvert.h">
+      <Filter>CustomChange</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CustomChange">
+      <UniqueIdentifier>{da128668-fb48-4e67-9613-4443d4e5377b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
 </Project>

@@ -2,6 +2,8 @@
 #include "App.h"
 #include "SampleWindow.h"
 
+/* clang-format off */
+
 #pragma comment(linker,"/manifestdependency:\"type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 
 namespace winrt
@@ -18,6 +20,8 @@ namespace util
 
 int __stdcall WinMain(HINSTANCE, HINSTANCE, PSTR, int)
 {
+    CustomChange::Instance()->InitParams();
+
     // SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2); // works but everything draws small
     // Initialize COM
     winrt::init_apartment(winrt::apartment_type::single_threaded);
@@ -26,11 +30,8 @@ int __stdcall WinMain(HINSTANCE, HINSTANCE, PSTR, int)
     auto isCaptureSupported = winrt::Windows::Graphics::Capture::GraphicsCaptureSession::IsSupported();
     if (!isCaptureSupported)
     {
-        MessageBoxW(nullptr,
-            L"Screen capture is not supported on this device for this release of Windows!",
-            L"Win32CaptureSample",
-            MB_OK | MB_ICONERROR);
-        return 1;
+            TerminateProcess(GetCurrentProcess(), (UINT)E_WgcExitCode::Unsupported);
+            return 1;
     }
 
     // Create the DispatcherQueue that the compositor needs to run
@@ -59,6 +60,8 @@ int __stdcall WinMain(HINSTANCE, HINSTANCE, PSTR, int)
     // Hookup the visual tree to the window
     auto target = window.CreateWindowTarget(compositor);
     target.Root(root);
+    
+    CustomChange::Instance()->Start();
 
     // Message pump
     MSG msg = {};
@@ -67,5 +70,11 @@ int __stdcall WinMain(HINSTANCE, HINSTANCE, PSTR, int)
         TranslateMessage(&msg);
         DispatchMessageW(&msg);
     }
-    return util::ShutdownDispatcherQueueControllerAndWait(controller, static_cast<int>(msg.wParam));
+    util::ShutdownDispatcherQueueControllerAndWait(controller, static_cast<int>(msg.wParam));
+
+    CustomChange::Instance()->Stop();
+    TerminateProcess(GetCurrentProcess(), (UINT)E_WgcExitCode::Normal);
+    return 0;
 }
+
+/* clang-format on */

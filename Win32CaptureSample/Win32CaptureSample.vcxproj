@@ -142,6 +142,7 @@
   <ItemGroup>
     <ClCompile Include="App.cpp" />
     <ClCompile Include="CaptureSnapshot.cpp" />
+    <ClCompile Include="change\CustomChange.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MonitorList.cpp" />
     <ClCompile Include="pch.cpp" />
@@ -152,6 +153,7 @@
   <ItemGroup>
     <ClInclude Include="App.h" />
     <ClInclude Include="CaptureSnapshot.h" />
+    <ClInclude Include="change\CustomChange.h" />
     <ClInclude Include="MonitorList.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="SampleWindow.h" />

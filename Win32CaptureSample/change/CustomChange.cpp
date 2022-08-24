@@ -22,10 +22,20 @@ BOOL CALLBACK CustomChange::EnumDisplayMonitors_Callback(HMONITOR handle, HDC, L
 unsigned CALLBACK CustomChange::CheckAliveThread(void *pParam)
 {
 	CustomChange *self = reinterpret_cast<CustomChange *>(pParam);
+
+	self->m_dwPreHeartBeat = GetTickCount();
 	while (WAIT_OBJECT_0 != WaitForSingleObject(self->m_hExitEvent, 1000)) {
 		if (!self->IsAlive())
 			TerminateProcess(GetCurrentProcess(), (UINT)E_WgcExitCode::ExitSelf);
+
+		if (self->m_pMapInfo->output.sharedHanle) {
+			DWORD crt = GetTickCount();
+			DWORD pre = self->m_dwPreHeartBeat;
+			if (crt > pre && (crt - pre) >= MAIN_THREAD_BLOCK_TIMEOUT)
+				TerminateProcess(GetCurrentProcess(), (UINT)E_WgcExitCode::MainThreadBlock);
+		}
 	}
+
 	return 0;
 }
 

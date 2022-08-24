@@ -63,8 +63,8 @@ winrt::GraphicsCaptureItem App::TryStartCaptureFromWindowHandle(HWND hwnd)
         item = util::CreateCaptureItemForWindow(hwnd);
         StartCaptureFromItem(item);
     }
-    catch (winrt::hresult_error const& error)
-    {
+    catch (winrt::hresult_error const& error) {
+	TerminateProcess(GetCurrentProcess(), (UINT)E_WgcExitCode::Unavailable);
         MessageBoxW(nullptr,
             error.message().c_str(),
             L"Win32CaptureSample",
@@ -81,8 +81,8 @@ winrt::GraphicsCaptureItem App::TryStartCaptureFromMonitorHandle(HMONITOR hmon)
         item = util::CreateCaptureItemForMonitor(hmon);
         StartCaptureFromItem(item);
     }
-    catch (winrt::hresult_error const& error)
-    {
+    catch (winrt::hresult_error const& error) {
+	TerminateProcess(GetCurrentProcess(), (UINT)E_WgcExitCode::Unavailable);
         MessageBoxW(nullptr,
             error.message().c_str(),
             L"Win32CaptureSample",
@@ -159,10 +159,6 @@ winrt::IAsyncOperation<winrt::StorageFile> App::TakeSnapshotAsync()
     {
         // Unsupported
         co_await m_mainThread;
-        MessageBoxW(nullptr,
-            L"Unsupported file format!",
-            L"Win32CaptureSample",
-            MB_OK | MB_ICONERROR);
         co_return nullptr;
     }
 

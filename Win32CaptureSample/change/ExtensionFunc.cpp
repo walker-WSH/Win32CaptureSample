@@ -1,6 +1,8 @@
 #include "./../pch.h"
 #include "./../App.h"
 #include "./../SampleWindow.h"
+#include "./../SimpleCapture.h"
+#include "CustomChange.h"
 
 namespace winrt {
 using namespace Windows::Foundation::Metadata;
@@ -64,4 +66,99 @@ void SampleWindow::AutoStartCapture()
 		m_app->IsCursorEnabled(CustomChange::Instance()->m_pMapInfo->input.cursor);
 
 	m_app->PixelFormat(m_pixelFormats[0].PixelFormat);
+}
+
+bool SimpleCapture::CreateSharedTexture(const D3D11_TEXTURE2D_DESC &descTemp, DXGI_FORMAT fmt)
+{
+	winrt::com_ptr<ID3D11Device> d3dDevice = GetDXGIInterfaceFromObject<ID3D11Device>(m_device);
+
+	D3D11_TEXTURE2D_DESC desc = {};
+	desc.Width = descTemp.Width;
+	desc.Height = descTemp.Height;
+	desc.Format = fmt;
+	desc.MipLevels = 1;
+	desc.ArraySize = 1;
+	desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+	desc.SampleDesc.Count = 1;
+	desc.Usage = D3D11_USAGE_DEFAULT;
+	desc.MiscFlags = D3D11_RESOURCE_MISC_SHARED;
+
+	HANDLE hdl = 0;
+	winrt::com_ptr<ID3D11Texture2D> textureTemp;
+	HRESULT hr = d3dDevice->CreateTexture2D(&desc, nullptr, (ID3D11Texture2D **)textureTemp.put_void());
+	if (!textureTemp) {
+		assert(false);
+		return false;
+	}
+
+	winrt::com_ptr<IDXGIResource> res;
+	textureTemp->QueryInterface(__uuidof(IDXGIResource), (void **)res.put_void());
+	if (!res) {
+		assert(false);
+		return false;
+	}
+
+	res->GetSharedHandle(&hdl);
+	if (!hdl) {
+		assert(false);
+		return false;
+	}
+
+	textureTemp->GetDesc(&m_textureDesc);
+	m_sharedTexture = textureTemp;
+	m_hSharedHandle = hdl;
+
+	return true;
+}
+
+void SimpleCapture::OnTextureCaptured(winrt::com_ptr<ID3D11Texture2D> texture)
+{
+	if (!texture)
+		return;
+
+	D3D11_TEXTURE2D_DESC descTemp;
+	texture->GetDesc(&descTemp);
+
+	DXGI_FORMAT fmt;
+	switch (descTemp.Format) {
+	case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:
+		fmt = DXGI_FORMAT_B8G8R8A8_UNORM;
+		break;
+	case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
+		fmt = DXGI_FORMAT_R8G8B8A8_UNORM;
+		break;
+	default:
+		fmt = descTemp.Format;
+		break;
+	}
+
+	if (fmt != DXGI_FORMAT_B8G8R8A8_UNORM && fmt != DXGI_FORMAT_R8G8B8A8_UNORM) {
+		assert(false);
+		return;
+	}
+
+	if (m_sharedTexture) {
+		if (m_textureDesc.Width != descTemp.Width || m_textureDesc.Height != descTemp.Height || m_textureDesc.Format != fmt) {
+			m_sharedTexture = nullptr;
+			m_hSharedHandle = 0;
+		}
+	}
+
+	if (!m_sharedTexture) {
+		bool bOK = CreateSharedTexture(descTemp, fmt);
+		if (!bOK) {
+			assert(false);
+			return;
+		}
+	}
+
+	m_d3dContext->CopyResource(m_sharedTexture.get(), texture.get());
+
+	ST_WGCOutputInfo output;
+	output.width = m_textureDesc.Width;
+	output.height = m_textureDesc.Height;
+	output.previousUpdate = GetTickCount();
+	output.sharedHanle = (uint64_t)m_hSharedHandle;
+
+	memmove(&CustomChange::Instance()->m_pMapInfo->output, &output, sizeof(ST_WGCOutputInfo));
 }

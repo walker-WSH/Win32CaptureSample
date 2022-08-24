@@ -293,7 +293,7 @@ unsigned GetWinVersion()
 	return (major << 8) | minor;
 }
 
-winrt::com_ptr<IDXGIAdapter1> InitFactory(const LUID &luid)
+winrt::com_ptr<IDXGIAdapter1> CreateAdapter(const LUID &luid)
 {
 	winrt::com_ptr<IDXGIFactory1> factory;
 	winrt::com_ptr<IDXGIAdapter1> adapter;
@@ -329,7 +329,7 @@ winrt::com_ptr<IDXGIAdapter1> InitFactory(const LUID &luid)
 
 winrt::com_ptr<ID3D11Device> CreateDX11Device()
 {
-	winrt::com_ptr<IDXGIAdapter1> adp = InitFactory(CustomChange::Instance()->m_pMapInfo->input.adapterLuid);
+	winrt::com_ptr<IDXGIAdapter1> adp = CreateAdapter(CustomChange::Instance()->m_pMapInfo->input.adapterLuid);
 	if (!adp) {
 		assert(false);
 		TerminateProcess(GetCurrentProcess(), (UINT)E_WgcExitCode::AdapterNotFound);

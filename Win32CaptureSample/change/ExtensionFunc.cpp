@@ -15,8 +15,21 @@ using namespace Windows::UI::Composition::Desktop;
 }
 
 namespace util {
-using namespace robmikh::common::desktop::controls;
+using namespace robmikh::common::desktop;
+using namespace robmikh::common::uwp;
 }
+
+HANDLE g_hSharedHandle = 0;
+D3D11_TEXTURE2D_DESC g_textureDesc{};
+winrt::com_ptr<ID3D11Texture2D> g_pSharedTexture;
+
+static const IID dxgiFactory2 = {0x50c83a1c, 0xe072, 0x4c48, {0x87, 0xb0, 0x36, 0x30, 0xfa, 0x36, 0xa6, 0xd0}};
+const static std::vector<D3D_FEATURE_LEVEL> featureLevels = {
+	D3D_FEATURE_LEVEL_11_0,
+	D3D_FEATURE_LEVEL_10_1,
+	D3D_FEATURE_LEVEL_10_0,
+	D3D_FEATURE_LEVEL_9_3,
+};
 
 void SampleWindow::HandleCaptureItemClosed()
 {
@@ -128,7 +141,7 @@ bool SimpleCapture::CreateSharedTexture(const D3D11_TEXTURE2D_DESC &descTemp, DX
 
 	HANDLE hdl = 0;
 	winrt::com_ptr<ID3D11Texture2D> textureTemp;
-	HRESULT hr = d3dDevice->CreateTexture2D(&desc, nullptr, (ID3D11Texture2D **)textureTemp.put_void());
+	HRESULT hr = d3dDevice->CreateTexture2D(&desc, nullptr, textureTemp.put());
 	if (!textureTemp) {
 		assert(false);
 		CheckDXError(d3dDevice, hr);
@@ -136,7 +149,7 @@ bool SimpleCapture::CreateSharedTexture(const D3D11_TEXTURE2D_DESC &descTemp, DX
 	}
 
 	winrt::com_ptr<IDXGIResource> res;
-	textureTemp->QueryInterface(__uuidof(IDXGIResource), (void **)res.put_void());
+	textureTemp->QueryInterface(__uuidof(IDXGIResource), res.put_void());
 	if (!res) {
 		assert(false);
 		CheckDXError(d3dDevice, hr);
@@ -150,9 +163,9 @@ bool SimpleCapture::CreateSharedTexture(const D3D11_TEXTURE2D_DESC &descTemp, DX
 		return false;
 	}
 
-	textureTemp->GetDesc(&m_textureDesc);
-	m_sharedTexture = textureTemp;
-	m_hSharedHandle = hdl;
+	textureTemp->GetDesc(&g_textureDesc);
+	g_pSharedTexture = textureTemp;
+	g_hSharedHandle = hdl;
 
 	return true;
 }
@@ -183,14 +196,14 @@ void SimpleCapture::OnTextureCaptured(winrt::com_ptr<ID3D11Texture2D> texture)
 		return;
 	}
 
-	if (m_sharedTexture) {
-		if (m_textureDesc.Width != descTemp.Width || m_textureDesc.Height != descTemp.Height || m_textureDesc.Format != fmt) {
-			m_sharedTexture = nullptr;
-			m_hSharedHandle = 0;
+	if (g_pSharedTexture) {
+		if (g_textureDesc.Width != descTemp.Width || g_textureDesc.Height != descTemp.Height || g_textureDesc.Format != fmt) {
+			g_pSharedTexture = nullptr;
+			g_hSharedHandle = 0;
 		}
 	}
 
-	if (!m_sharedTexture) {
+	if (!g_pSharedTexture) {
 		bool bOK = CreateSharedTexture(descTemp, fmt);
 		if (!bOK) {
 			assert(false);
@@ -198,19 +211,142 @@ void SimpleCapture::OnTextureCaptured(winrt::com_ptr<ID3D11Texture2D> texture)
 		}
 	}
 
-	m_d3dContext->CopyResource(m_sharedTexture.get(), texture.get());
+	m_d3dContext->CopyResource(g_pSharedTexture.get(), texture.get());
 
 	ST_WGCOutputInfo output;
-	output.width = m_textureDesc.Width;
-	output.height = m_textureDesc.Height;
+	output.width = g_textureDesc.Width;
+	output.height = g_textureDesc.Height;
 	output.previousUpdate = GetTickCount();
-	output.sharedHanle = (uint64_t)m_hSharedHandle;
+	output.sharedHanle = (uint64_t)g_hSharedHandle;
 
 	memmove(&CustomChange::Instance()->m_pMapInfo->output, &output, sizeof(ST_WGCOutputInfo));
 
 #ifdef _DEBUG
-	char buf[200];
-	snprintf(buf, 200, "WGC handle %llu \n", (uint64_t)m_hSharedHandle);
+	char buf[MAX_PATH];
+	snprintf(buf, MAX_PATH, "WGC handle %llu \n", (uint64_t)g_hSharedHandle);
 	OutputDebugStringA(buf);
 #endif
+}
+
+using get_file_version_info_size_wt = DWORD(WINAPI *)(LPCWSTR md, LPDWORD unused);
+using get_file_version_info_wt = BOOL(WINAPI *)(LPCWSTR md, DWORD unused, DWORD len, LPVOID data);
+using ver_query_value_wt = BOOL(WINAPI *)(LPVOID data, LPCWSTR subblock, LPVOID *buf, PUINT sizeout);
+
+bool InitFun(get_file_version_info_size_wt &pFunc1, get_file_version_info_wt &pFunc2, ver_query_value_wt &pFunc3)
+{
+	HMODULE ver = GetModuleHandleW(L"version");
+	if (!ver)
+		return false;
+
+	pFunc1 = (get_file_version_info_size_wt)GetProcAddress(ver, "GetFileVersionInfoSizeW");
+	pFunc2 = (get_file_version_info_wt)GetProcAddress(ver, "GetFileVersionInfoW");
+	pFunc3 = (ver_query_value_wt)GetProcAddress(ver, "VerQueryValueW");
+
+	if (!pFunc1 || !pFunc2 || !pFunc3)
+		return false;
+
+	return true;
+}
+
+VS_FIXEDFILEINFO GetDllVersion(const wchar_t *pDllName)
+{
+	LPVOID data = nullptr;
+	VS_FIXEDFILEINFO ret = {};
+
+	do {
+		get_file_version_info_size_wt pGetFileVersionInfoSize;
+		get_file_version_info_wt pGetFileVersionInfo;
+		ver_query_value_wt pVerQueryValue;
+
+		if (!InitFun(pGetFileVersionInfoSize, pGetFileVersionInfo, pVerQueryValue))
+			break;
+
+		DWORD size = pGetFileVersionInfoSize(pDllName, nullptr);
+		if (!size)
+			break;
+
+		data = HeapAlloc(GetProcessHeap(), 0, size);
+		if (!pGetFileVersionInfo(L"kernel32", 0, size, data))
+			break;
+
+		UINT len = 0;
+		VS_FIXEDFILEINFO *info = nullptr;
+		pVerQueryValue(data, L"\\", (LPVOID *)&info, &len);
+
+		ret = *info;
+	} while (false);
+
+	if (data) {
+		HeapFree(GetProcessHeap(), 0, data);
+	}
+
+	return ret;
+}
+
+unsigned GetWinVersion()
+{
+	VS_FIXEDFILEINFO info = GetDllVersion(L"kernel32");
+
+	auto major = (int)HIWORD(info.dwFileVersionMS);
+	auto minor = (int)LOWORD(info.dwFileVersionMS);
+
+	return (major << 8) | minor;
+}
+
+winrt::com_ptr<IDXGIAdapter1> InitFactory(const LUID &luid)
+{
+	winrt::com_ptr<IDXGIFactory1> factory;
+	winrt::com_ptr<IDXGIAdapter1> adapter;
+
+	IID factoryIID = (GetWinVersion() >= 0x602) ? dxgiFactory2 : __uuidof(IDXGIFactory1);
+	HRESULT hr = CreateDXGIFactory1(factoryIID, (void **)factory.put_void());
+	if (FAILED(hr))
+		return nullptr;
+
+	int adapterIndex = 0;
+	while (factory->EnumAdapters1(adapterIndex++, adapter.put()) == S_OK) {
+		DXGI_ADAPTER_DESC adpDesc;
+		adapter->GetDesc(&adpDesc);
+
+		bool bChoosen = (adpDesc.AdapterLuid.HighPart == luid.HighPart && adpDesc.AdapterLuid.LowPart == luid.LowPart);
+		if (!bChoosen) {
+#ifdef _DEBUG
+			if (!luid.HighPart && !luid.LowPart)
+				bChoosen = true; // using default adapter
+#endif
+		}
+
+		if (bChoosen) {
+			OutputDebugStringW(L"WGC select adapter: ");
+			OutputDebugStringW(adpDesc.Description);
+			OutputDebugStringW(L"\n");
+			return adapter;
+		}
+	}
+
+	return nullptr;
+}
+
+winrt::com_ptr<ID3D11Device> CreateDX11Device()
+{
+	winrt::com_ptr<IDXGIAdapter1> adp = InitFactory(CustomChange::Instance()->m_pMapInfo->input.adapterLuid);
+	if (!adp) {
+		assert(false);
+		TerminateProcess(GetCurrentProcess(), (UINT)E_WgcExitCode::AdapterNotFound);
+		return nullptr;
+	}
+
+	winrt::com_ptr<ID3D11Device> pDX11Device = nullptr;
+	winrt::com_ptr<ID3D11DeviceContext> pDeviceContext = nullptr;
+
+	D3D_FEATURE_LEVEL levelUsed = D3D_FEATURE_LEVEL_9_3;
+	HRESULT hr = D3D11CreateDevice(adp.get(), D3D_DRIVER_TYPE_UNKNOWN, nullptr, D3D11_CREATE_DEVICE_BGRA_SUPPORT, featureLevels.data(), (UINT)featureLevels.size(), D3D11_SDK_VERSION,
+				       pDX11Device.put(), &levelUsed, pDeviceContext.put());
+	if (FAILED(hr)) {
+		assert(false);
+		TerminateProcess(GetCurrentProcess(), (UINT)E_WgcExitCode::DXFailCreate);
+		return nullptr;
+	}
+
+	return pDX11Device;
 }

@@ -46,9 +46,6 @@ private:
     bool TryUpdatePixelFormat();
 
     // code related with shared texture
-    winrt::com_ptr<ID3D11Texture2D> m_sharedTexture;
-    D3D11_TEXTURE2D_DESC m_textureDesc{};
-    HANDLE m_hSharedHandle = 0;
     void OnTextureCaptured(winrt::com_ptr<ID3D11Texture2D> texture);
     bool CreateSharedTexture(const D3D11_TEXTURE2D_DESC &descTemp, DXGI_FORMAT fmt);
 

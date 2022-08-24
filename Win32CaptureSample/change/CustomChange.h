@@ -7,6 +7,9 @@
 #include <string>
 #include <vector>
 #include <atomic>
+#include <d3d11.h>
+#include <dxgi.h>
+#include <dxgi1_2.h>
 #include "WgcIPC.h"
 #include "HandleWrapper.h"
 

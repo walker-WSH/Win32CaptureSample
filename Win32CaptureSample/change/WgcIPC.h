@@ -30,6 +30,8 @@ enum class E_WgcExitCode {
 	ExitSelf,
 	FailInitMap,
 	DXError,
+	DXFailCreate,
+	AdapterNotFound,
 	MainThreadBlock,
 	CaptureClosed,
 	WaitVideoTimeout,

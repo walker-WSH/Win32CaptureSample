@@ -331,5 +331,6 @@ void SampleWindow::StopCapture()
 
 void SampleWindow::OnCaptureItemClosed(winrt::GraphicsCaptureItem const&, winrt::Windows::Foundation::IInspectable const&)
 {
+    HandleCaptureItemClosed();;
     StopCapture();
 }

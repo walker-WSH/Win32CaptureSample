@@ -40,6 +40,7 @@ private:
         CaptureType captureType);
 
     void AutoStartCapture();
+    void HandleCaptureItemClosed();
 
 private:
     HWND m_windowComboBox = nullptr;

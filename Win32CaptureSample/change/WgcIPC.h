@@ -31,6 +31,8 @@ enum class E_WgcExitCode {
 	FailInitMap,
 	DXError,
 	MainThreadBlock,
+	CaptureClosed,
+	WaitVideoTimeout,
 };
 
 enum class E_CaptureType {

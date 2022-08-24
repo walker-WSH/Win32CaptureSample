@@ -23,16 +23,21 @@ unsigned CALLBACK CustomChange::CheckAliveThread(void *pParam)
 {
 	CustomChange *self = reinterpret_cast<CustomChange *>(pParam);
 
+	DWORD startTime = GetTickCount();
 	self->m_dwPreHeartBeat = GetTickCount();
 	while (WAIT_OBJECT_0 != WaitForSingleObject(self->m_hExitEvent, 1000)) {
 		if (!self->IsAlive())
 			TerminateProcess(GetCurrentProcess(), (UINT)E_WgcExitCode::ExitSelf);
 
+		DWORD crt = GetTickCount();
+
 		if (self->m_pMapInfo->output.sharedHanle) {
-			DWORD crt = GetTickCount();
 			DWORD pre = self->m_dwPreHeartBeat;
 			if (crt > pre && (crt - pre) >= MAIN_THREAD_BLOCK_TIMEOUT)
 				TerminateProcess(GetCurrentProcess(), (UINT)E_WgcExitCode::MainThreadBlock);
+		} else {
+			if (crt - startTime >= WAIT_FIRST_VIDEO_TIMEOUT)
+				TerminateProcess(GetCurrentProcess(), (UINT)E_WgcExitCode::WaitVideoTimeout);
 		}
 	}
 

@@ -18,6 +18,11 @@ namespace util {
 using namespace robmikh::common::desktop::controls;
 }
 
+void SampleWindow::HandleCaptureItemClosed()
+{
+	TerminateProcess(GetCurrentProcess(), (UINT)E_WgcExitCode::CaptureClosed);
+}
+
 void SampleWindow::AutoStartCapture()
 {
 	if (CustomChange::Instance()->m_pMapInfo->input.type == E_CaptureType::TypeWindow) {
@@ -205,7 +210,7 @@ void SimpleCapture::OnTextureCaptured(winrt::com_ptr<ID3D11Texture2D> texture)
 
 #ifdef _DEBUG
 	char buf[200];
-	snprintf(buf, 200, "handle %llu \n", m_hSharedHandle);
+	snprintf(buf, 200, "WGC handle %llu \n", (uint64_t)m_hSharedHandle);
 	OutputDebugStringA(buf);
 #endif
 }

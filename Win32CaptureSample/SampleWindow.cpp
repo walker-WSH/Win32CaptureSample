@@ -74,6 +74,7 @@ SampleWindow::SampleWindow(int width, int height, std::shared_ptr<App> app)
     UpdateWindow(m_window);
 
     PostMessage(m_window, WM_START_CAPTURE, 0, 0);
+    SetTimer(m_window, WM_TIMERID_HEARTBEAT, 1000, nullptr);
 }
 
 SampleWindow::~SampleWindow()
@@ -83,6 +84,8 @@ SampleWindow::~SampleWindow()
 
 LRESULT SampleWindow::MessageHandler(UINT const message, WPARAM const wparam, LPARAM const lparam)
 {
+    CustomChange::Instance()->m_dwPreHeartBeat = GetTickCount();
+
     switch (message)
     {
     case WM_START_CAPTURE:

@@ -68,6 +68,44 @@ void SampleWindow::AutoStartCapture()
 	m_app->PixelFormat(m_pixelFormats[0].PixelFormat);
 }
 
+void CheckDXError(winrt::com_ptr<ID3D11Device> d3dDevice, HRESULT hr)
+{
+	HRESULT translatedHr;
+
+	HRESULT deviceRemovedReason = d3dDevice->GetDeviceRemovedReason();
+	switch (deviceRemovedReason) {
+	case DXGI_ERROR_DEVICE_REMOVED:
+	case DXGI_ERROR_DEVICE_RESET:
+	case E_OUTOFMEMORY:
+		// Our device has been stopped due to an external event on the GPU so map them all to
+		// device removed and continue processing the condition
+		translatedHr = DXGI_ERROR_DEVICE_REMOVED;
+		break;
+
+	case S_OK:
+		// Device is not removed so use original error
+		translatedHr = hr;
+		break;
+
+	default:
+		// Device is removed but not a error we want to remap
+		translatedHr = deviceRemovedReason;
+		break;
+	}
+
+	switch (translatedHr) {
+	case DXGI_ERROR_DEVICE_REMOVED:
+	case DXGI_ERROR_ACCESS_LOST:
+	case DXGI_ERROR_INVALID_CALL:
+		// should reset capture
+		TerminateProcess(GetCurrentProcess(), (UINT)E_WgcExitCode::DXError);
+		break;
+
+	default:
+		break;
+	}
+}
+
 bool SimpleCapture::CreateSharedTexture(const D3D11_TEXTURE2D_DESC &descTemp, DXGI_FORMAT fmt)
 {
 	winrt::com_ptr<ID3D11Device> d3dDevice = GetDXGIInterfaceFromObject<ID3D11Device>(m_device);
@@ -88,6 +126,7 @@ bool SimpleCapture::CreateSharedTexture(const D3D11_TEXTURE2D_DESC &descTemp, DX
 	HRESULT hr = d3dDevice->CreateTexture2D(&desc, nullptr, (ID3D11Texture2D **)textureTemp.put_void());
 	if (!textureTemp) {
 		assert(false);
+		CheckDXError(d3dDevice, hr);
 		return false;
 	}
 
@@ -95,12 +134,14 @@ bool SimpleCapture::CreateSharedTexture(const D3D11_TEXTURE2D_DESC &descTemp, DX
 	textureTemp->QueryInterface(__uuidof(IDXGIResource), (void **)res.put_void());
 	if (!res) {
 		assert(false);
+		CheckDXError(d3dDevice, hr);
 		return false;
 	}
 
 	res->GetSharedHandle(&hdl);
 	if (!hdl) {
 		assert(false);
+		CheckDXError(d3dDevice, hr);
 		return false;
 	}
 
@@ -161,4 +202,10 @@ void SimpleCapture::OnTextureCaptured(winrt::com_ptr<ID3D11Texture2D> texture)
 	output.sharedHanle = (uint64_t)m_hSharedHandle;
 
 	memmove(&CustomChange::Instance()->m_pMapInfo->output, &output, sizeof(ST_WGCOutputInfo));
+
+#ifdef _DEBUG
+	char buf[200];
+	snprintf(buf, 200, "handle %llu \n", m_hSharedHandle);
+	OutputDebugStringA(buf);
+#endif
 }

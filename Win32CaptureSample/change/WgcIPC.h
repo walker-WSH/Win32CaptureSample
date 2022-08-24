@@ -29,6 +29,8 @@ enum class E_WgcExitCode {
 	Unsupported,
 	ExitSelf,
 	FailInitMap,
+	DXError,
+	MainThreadBlock,
 };
 
 enum class E_CaptureType {

@@ -6,10 +6,13 @@
 #include <assert.h>
 #include <string>
 #include <vector>
+#include <atomic>
 #include "WgcIPC.h"
 #include "HandleWrapper.h"
 
 #define WM_START_CAPTURE (WM_USER + 1)
+#define WM_TIMERID_HEARTBEAT 2000
+#define MAIN_THREAD_BLOCK_TIMEOUT 5000
 
 struct ST_EnumMonitorInfo {
 	HMONITOR handle = 0;
@@ -31,6 +34,7 @@ public:
 	void Stop();
 
 	ST_WGCMapInfo *m_pMapInfo = nullptr;
+	std::atomic<DWORD> m_dwPreHeartBeat = GetTickCount();
 
 protected:
 	CustomChange() {}

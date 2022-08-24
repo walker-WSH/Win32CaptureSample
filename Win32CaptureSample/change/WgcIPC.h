@@ -44,12 +44,22 @@ enum class E_CaptureType {
 //---------------------------------------- struct start ---------------------------------
 #pragma pack(push)
 #pragma pack(1)
+struct ST_WindowDetail {
+	uint64_t hWnd; // Can't use HWND since its size is not fixed
+};
+
+struct ST_MonitorDetail {
+	int monitorIndex;
+};
+
 struct ST_WGCInputInfo {
 	LUID adapterLuid = {0};
-	E_CaptureType type = E_CaptureType::TypeUnknown;
-	uint64_t hWnd = 0; // Can't use HWND since its size is not fixed
-	int monitorIndex = -1;
 	bool cursor = true;
+	E_CaptureType type = E_CaptureType::TypeUnknown;
+	union MoreInfo {
+		ST_WindowDetail wd;
+		ST_MonitorDetail md;
+	} more;
 };
 
 struct ST_WGCOutputInfo {

@@ -26,7 +26,7 @@ void SampleWindow::HandleCaptureItemClosed()
 void SampleWindow::AutoStartCapture()
 {
 	if (CustomChange::Instance()->m_pMapInfo->input.type == E_CaptureType::TypeWindow) {
-		auto hWnd = (HWND)CustomChange::Instance()->m_pMapInfo->input.hWnd;
+		auto hWnd = (HWND)CustomChange::Instance()->m_pMapInfo->input.more.wd.hWnd;
 		if (!IsWindow(hWnd)) {
 			TerminateProcess(GetCurrentProcess(), (UINT)E_WgcExitCode::NotFound);
 			return;
@@ -47,7 +47,7 @@ void SampleWindow::AutoStartCapture()
 		std::vector<ST_EnumMonitorInfo> monitorList;
 		EnumDisplayMonitors(nullptr, nullptr, &CustomChange::EnumDisplayMonitors_Callback, (LPARAM)&monitorList);
 
-		int index = CustomChange::Instance()->m_pMapInfo->input.monitorIndex;
+		int index = CustomChange::Instance()->m_pMapInfo->input.more.md.monitorIndex;
 		if (index < 0 || index >= monitorList.size()) {
 			TerminateProcess(GetCurrentProcess(), (UINT)E_WgcExitCode::NotFound);
 			return;

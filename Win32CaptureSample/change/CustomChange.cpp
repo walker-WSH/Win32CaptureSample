@@ -84,12 +84,12 @@ void CustomChange::InitParams()
 		return;
 	}
 
-	if (m_pMapInfo->input.type == E_CaptureType::TypeWindow) {
+	if (m_pMapInfo->input.type == E_WGCType::TypeWindow) {
 		if (!IsWindow(HWND(m_pMapInfo->input.more.wd.hWnd))) {
 			TerminateProcess(GetCurrentProcess(), (UINT)E_WgcExitCode::NotFound);
 			return;
 		}
-	} else if (m_pMapInfo->input.type == E_CaptureType::TypeMonitor) {
+	} else if (m_pMapInfo->input.type == E_WGCType::TypeMonitor) {
 		std::vector<ST_EnumMonitorInfo> monitorList;
 		EnumDisplayMonitors(nullptr, nullptr, EnumDisplayMonitors_Callback, (LPARAM)&monitorList);
 

@@ -38,7 +38,7 @@ enum class E_WgcExitCode {
 	WaitVideoTimeout,
 };
 
-enum class E_CaptureType {
+enum class E_WGCType {
 	TypeUnknown = 0,
 	TypeWindow,
 	TypeMonitor,
@@ -58,7 +58,7 @@ struct ST_MonitorDetail {
 struct ST_WGCInputInfo {
 	LUID adapterLuid = {0};
 	bool cursor = true;
-	E_CaptureType type = E_CaptureType::TypeUnknown;
+	E_WGCType type = E_WGCType::TypeUnknown;
 	union MoreInfo {
 		ST_WindowDetail wd;
 		ST_MonitorDetail md;

@@ -38,7 +38,7 @@ void SampleWindow::HandleCaptureItemClosed()
 
 void SampleWindow::AutoStartCapture()
 {
-	if (CustomChange::Instance()->m_pMapInfo->input.type == E_CaptureType::TypeWindow) {
+	if (CustomChange::Instance()->m_pMapInfo->input.type == E_WGCType::TypeWindow) {
 		auto hWnd = (HWND)CustomChange::Instance()->m_pMapInfo->input.more.wd.hWnd;
 		if (!IsWindow(hWnd)) {
 			TerminateProcess(GetCurrentProcess(), (UINT)E_WgcExitCode::NotFound);
@@ -227,7 +227,7 @@ void SimpleCapture::OnTextureCaptured(winrt::com_ptr<ID3D11Texture2D> texture)
 
 #ifdef _DEBUG
 	char buf[MAX_PATH];
-	snprintf(buf, MAX_PATH, "WGC handle %llu \n", (uint64_t)g_hSharedHandle);
+	snprintf(buf, MAX_PATH, "[%us] WGC handle %llu \n", GetTickCount() / 1000, (uint64_t)g_hSharedHandle);
 	OutputDebugStringA(buf);
 #endif
 }
@@ -315,8 +315,10 @@ winrt::com_ptr<IDXGIAdapter1> CreateAdapter(const LUID &luid)
 		bool bChoosen = (adpDesc.AdapterLuid.HighPart == luid.HighPart && adpDesc.AdapterLuid.LowPart == luid.LowPart);
 		if (!bChoosen) {
 #ifdef _DEBUG
-			if (!luid.HighPart && !luid.LowPart)
+			if (!luid.HighPart && !luid.LowPart) {
 				bChoosen = true; // using default adapter
+				CustomChange::Instance()->m_pMapInfo->input.adapterLuid = adpDesc.AdapterLuid;
+			}
 #endif
 		}
 

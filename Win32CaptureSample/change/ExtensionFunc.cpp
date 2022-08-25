@@ -144,6 +144,7 @@ bool SimpleCapture::CreateSharedTexture(const D3D11_TEXTURE2D_DESC &descTemp, DX
 	HRESULT hr = d3dDevice->CreateTexture2D(&desc, nullptr, textureTemp.put());
 	if (!textureTemp) {
 		assert(false);
+		OutputDebugStringA("[WGC Process] fail to create texture \n");
 		CheckDXError(d3dDevice, hr);
 		return false;
 	}
@@ -152,6 +153,7 @@ bool SimpleCapture::CreateSharedTexture(const D3D11_TEXTURE2D_DESC &descTemp, DX
 	textureTemp->QueryInterface(__uuidof(IDXGIResource), res.put_void());
 	if (!res) {
 		assert(false);
+		OutputDebugStringA("[WGC Process] fail to get DXResource \n");
 		CheckDXError(d3dDevice, hr);
 		return false;
 	}
@@ -159,6 +161,7 @@ bool SimpleCapture::CreateSharedTexture(const D3D11_TEXTURE2D_DESC &descTemp, DX
 	res->GetSharedHandle(&hdl);
 	if (!hdl) {
 		assert(false);
+		OutputDebugStringA("[WGC Process] fail to get shared handle \n");
 		CheckDXError(d3dDevice, hr);
 		return false;
 	}
@@ -193,6 +196,7 @@ void SimpleCapture::OnTextureCaptured(winrt::com_ptr<ID3D11Texture2D> texture)
 
 	if (fmt != DXGI_FORMAT_B8G8R8A8_UNORM && fmt != DXGI_FORMAT_R8G8B8A8_UNORM) {
 		assert(false);
+		OutputDebugStringA("[WGC Process] invalid format \n");
 		return;
 	}
 
@@ -207,6 +211,7 @@ void SimpleCapture::OnTextureCaptured(winrt::com_ptr<ID3D11Texture2D> texture)
 		bool bOK = CreateSharedTexture(descTemp, fmt);
 		if (!bOK) {
 			assert(false);
+			OutputDebugStringA("[WGC Process] fail to create shared texture \n");
 			return;
 		}
 	}
@@ -338,6 +343,7 @@ winrt::com_ptr<ID3D11Device> CreateDX11Device()
 	winrt::com_ptr<IDXGIAdapter1> adp = CreateAdapter(CustomChange::Instance()->m_pMapInfo->input.adapterLuid);
 	if (!adp) {
 		assert(false);
+		OutputDebugStringA("[WGC Process] fail to create adapter \n");
 		TerminateProcess(GetCurrentProcess(), (UINT)E_WgcExitCode::AdapterNotFound);
 		return nullptr;
 	}
@@ -350,6 +356,7 @@ winrt::com_ptr<ID3D11Device> CreateDX11Device()
 				       pDX11Device.put(), &levelUsed, pDeviceContext.put());
 	if (FAILED(hr)) {
 		assert(false);
+		OutputDebugStringA("[WGC Process] fail to create dxdevice \n");
 		TerminateProcess(GetCurrentProcess(), (UINT)E_WgcExitCode::DXFailCreate);
 		return nullptr;
 	}

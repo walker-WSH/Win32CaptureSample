@@ -33,11 +33,12 @@ unsigned CALLBACK CustomChange::CheckAliveThread(void *pParam)
 			DWORD pre = self->m_dwPreHeartBeat;
 			if (crt > pre && (crt - pre) >= MAIN_THREAD_BLOCK_TIMEOUT) {
 				assert(false);
+				OutputDebugStringA("[WGC Process] main thread is blocked \n");
 				TerminateProcess(GetCurrentProcess(), (UINT)E_WgcExitCode::MainThreadBlock);
 			}
 		} else {
 			if (crt - startTime >= WAIT_FIRST_VIDEO_TIMEOUT) {
-				assert(false);
+				OutputDebugStringA("[WGC Process] timeout to wait first frame \n");
 				TerminateProcess(GetCurrentProcess(), (UINT)E_WgcExitCode::WaitVideoTimeout);
 			}
 		}
@@ -60,6 +61,7 @@ void CustomChange::InitParams()
 	LPWSTR *argv = CommandLineToArgvW(GetCommandLineW(), &argc);
 	if (!argv) {
 		assert(false);
+		OutputDebugStringA("[WGC Process] invalid params \n");
 		TerminateProcess(GetCurrentProcess(), (UINT)E_WgcExitCode::InvalidParam);
 		return;
 	}
@@ -68,6 +70,7 @@ void CustomChange::InitParams()
 
 	if (argc != 2 || !argv[1]) {
 		assert(false);
+		OutputDebugStringA("[WGC Process] invalid params \n");
 		TerminateProcess(GetCurrentProcess(), (UINT)E_WgcExitCode::InvalidParam);
 		return;
 	}
@@ -100,6 +103,7 @@ void CustomChange::InitParams()
 		}
 	} else {
 		assert(false);
+		OutputDebugStringA("[WGC Process] invalid params \n");
 		TerminateProcess(GetCurrentProcess(), (UINT)E_WgcExitCode::InvalidParam);
 		return;
 	}
@@ -145,12 +149,14 @@ bool CustomChange::InitMap()
 	m_hMapHandle = CHandleWrapper::GetMap(name.c_str(), (unsigned)size, &bNewCreate);
 	if (!CHandleWrapper::IsHandleValid(m_hMapHandle) || bNewCreate) {
 		assert(false);
+		OutputDebugStringA("[WGC Process] fail to init map \n");
 		return false;
 	}
 
 	m_pMapViewOfFile = MapViewOfFile(m_hMapHandle, FILE_MAP_ALL_ACCESS, 0, 0, size);
 	if (!m_pMapViewOfFile) {
 		assert(false);
+		OutputDebugStringA("[WGC Process] fail to map view \n");
 		return false;
 	}
 

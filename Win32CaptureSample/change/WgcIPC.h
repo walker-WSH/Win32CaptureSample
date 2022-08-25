@@ -2,6 +2,7 @@
 #include <windows.h>
 #include <stdint.h>
 #include <assert.h>
+#include <dxgi.h>
 
 #define ALIGN(bytes, align) (((bytes) + ((align)-1)) & ~((align)-1))
 
@@ -69,6 +70,7 @@ struct ST_WGCOutputInfo {
 	uint64_t sharedHanle = 0;    // Can't use HANDLE since its size is not fixed
 	uint32_t width = 0;
 	uint32_t height = 0;
+	DXGI_FORMAT format = DXGI_FORMAT_UNKNOWN;
 };
 
 struct ST_WGCMapInfo {

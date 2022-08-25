@@ -213,9 +213,13 @@ void SimpleCapture::OnTextureCaptured(winrt::com_ptr<ID3D11Texture2D> texture)
 
 	m_d3dContext->CopyResource(g_pSharedTexture.get(), texture.get());
 
+	if (!CustomChange::Instance()->m_pMapInfo->output.sharedHanle)
+		CustomChange::Instance()->m_dwPreHeartBeat = GetTickCount();
+
 	ST_WGCOutputInfo output;
 	output.width = g_textureDesc.Width;
 	output.height = g_textureDesc.Height;
+	output.format = g_textureDesc.Format;
 	output.previousUpdate = GetTickCount();
 	output.sharedHanle = (uint64_t)g_hSharedHandle;
 

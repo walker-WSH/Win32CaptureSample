@@ -84,6 +84,10 @@ void SampleWindow::AutoStartCapture()
 		m_app->IsCursorEnabled(CustomChange::Instance()->m_pMapInfo->input.cursor);
 
 	m_app->PixelFormat(m_pixelFormats[0].PixelFormat);
+
+#ifdef _DEBUG
+	m_app->IsBorderRequired(true);
+#endif
 }
 
 void CheckDXError(winrt::com_ptr<ID3D11Device> d3dDevice, HRESULT hr)
@@ -231,9 +235,14 @@ void SimpleCapture::OnTextureCaptured(winrt::com_ptr<ID3D11Texture2D> texture)
 	memmove(&CustomChange::Instance()->m_pMapInfo->output, &output, sizeof(ST_WGCOutputInfo));
 
 #ifdef _DEBUG
-	char buf[MAX_PATH];
-	snprintf(buf, MAX_PATH, "[%us] WGC handle %llu \n", GetTickCount() / 1000, (uint64_t)g_hSharedHandle);
-	OutputDebugStringA(buf);
+	static HANDLE s_hPreHdl = 0;
+	if (s_hPreHdl != g_hSharedHandle) {
+		s_hPreHdl = g_hSharedHandle;
+
+		char buf[MAX_PATH];
+		snprintf(buf, MAX_PATH, "[PID:%u] WGC handle: %llu (%dx%d) \n", GetCurrentProcessId(), (uint64_t)g_hSharedHandle, g_textureDesc.Width, g_textureDesc.Height);
+		OutputDebugStringA(buf);
+	}
 #endif
 }
 
